@@ -1,9 +1,12 @@
-Generate a Gherkin test for the login functionality on conduit.com.
-The user should use the email: "testAPI@test.com" and the password: "welcome123".
-The test should include the following steps:
-- Navigate to the login page.
-- Enter the email and password.
-- Click on the login button.
-- Validate that the user is logged in and redirected to the dashboard.
-- Also include a check to ensure an error message is shown if login fails.
-Please ensure the test is written in Gherkin format.
+Generate a Gherkin test scenario for the login functionality of a web application.
+
+Include two scenarios:
+1. A successful login scenario where the user is authenticated and redirected to the dashboard.
+2. A failed login scenario with invalid credentials, where the user receives an error message indicating "Invalid email or password."
+
+Example:
+Scenario: Failed Login with Invalid Credentials
+  Given the user navigates to the login page
+  When the user enters an invalid email and password
+  And the user clicks on the login button
+  Then the user should see an error message "Invalid email or password"
