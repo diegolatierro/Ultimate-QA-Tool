@@ -9,7 +9,8 @@ dotenv.config();
 export class AITestGenerator {
     private apiUrl: string = 'https://api.ai21.com/studio/v1/chat/completions';
     
-    async generateTest(prompt: string): Promise<string> {
+    // Método para generar tanto el Gherkin como el código automatizado
+    async generateTest(prompt: string): Promise<{ gherkin: string, automatedTest: string }> {
         const requestData = {
             model: "jamba-instruct",
             messages: [
@@ -18,7 +19,7 @@ export class AITestGenerator {
                     content: prompt
                 }
             ],
-            max_tokens: 150
+            max_tokens: 300
         };
 
         try {
@@ -39,12 +40,16 @@ export class AITestGenerator {
 
                 console.log("Generated Gherkin Test:", gherkinTest);
 
-                // Extraer el nombre del archivo basado en el prompt
+                // Extraer el nombre del archivo basado en el prompt, utilizando el nombre "feature" por ejemplo
                 const fileName = this.extractFileName(prompt);
 
                 // Guardar el test en un archivo .feature
                 await this.saveToFile(gherkinTest, fileName);
-                return gherkinTest;
+
+                // Generar el código automatizado usando el Gherkin generado
+                const automatedTest = await this.generateAutomatedTest(gherkinTest);
+
+                return { gherkin: gherkinTest, automatedTest };
             } else {
                 console.error("Invalid API response structure:", response.data);
                 throw new Error("No valid test generated. API response structure is invalid.");
@@ -55,13 +60,15 @@ export class AITestGenerator {
         }
     }
 
-    // Método para extraer el nombre del archivo del prompt
+    // Método para extraer el nombre del archivo del prompt, asegurando un nombre único
     private extractFileName(prompt: string): string {
-        const match = prompt.match(/for the (.+?) functionality/i);
+        // Extraer una referencia más clara al tipo de funcionalidad desde el prompt
+        const match = prompt.match(/for the (.+?) page/i);
+        const timestamp = new Date().toISOString().replace(/[:.-]/g, '');  // Marca de tiempo para evitar sobrescrituras
         if (match && match[1]) {
-            return match[1].replace(/\s+/g, '').toLowerCase() + 'Test.feature'; // Debe generar ".feature"
+            return `${match[1].replace(/\s+/g, '').toLowerCase()}Test_${timestamp}.feature`;  // Añadir la marca de tiempo
         }
-        return 'generatedTest.feature';  // Nombre por defecto
+        return `generatedTest_${timestamp}.feature`;  // Nombre por defecto con timestamp
     }
 
     // Guardar el archivo Gherkin en la carpeta adecuada
@@ -82,6 +89,51 @@ export class AITestGenerator {
         } catch (error) {
             console.error("Error saving file:", error);
             throw new Error("Failed to save the Gherkin test file.");
+        }
+    }
+
+    // Método para generar el código automatizado a partir del Gherkin
+    private async generateAutomatedTest(gherkinTest: string): Promise<string> {
+        const requestData = {
+            model: "jamba-instruct",
+            messages: [
+                {
+                    role: "user",
+                    content: `
+                    Based on the following Gherkin test:
+                    "${gherkinTest}"
+                    Generate automated test code using Playwright and TypeScript. The test should include web elements, interactions, and validations.
+                    `
+                }
+            ],
+            max_tokens: 300
+        };
+
+        try {
+            const response = await axios.post(this.apiUrl, requestData, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.AI21_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // Validación del código automatizado
+            if (response.data && response.data.choices && response.data.choices.length > 0) {
+                const automatedTest = response.data.choices[0].message.content;
+
+                if (!automatedTest || automatedTest.trim().length === 0) {
+                    throw new Error("API returned an empty automated test. Check the prompt and API response.");
+                }
+
+                console.log("Generated Automated Test:", automatedTest);
+                return automatedTest;
+            } else {
+                console.error("Invalid API response structure:", response.data);
+                throw new Error("No valid automated test generated. API response structure is invalid.");
+            }
+        } catch (error) {
+            console.error("Error generating automated test:", error);
+            throw new Error("Failed to generate automated test. " + error.message);
         }
     }
 }
