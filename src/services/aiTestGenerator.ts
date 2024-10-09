@@ -1,52 +1,60 @@
-import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { AITestGenerator } from '../services/aiTestGenerator';
 
-export class AITestGenerator {
-    // Definir apiUrl como la URL del servicio (AI21 Labs)
-    private apiUrl: string = 'https://api.ai21.com/studio/v1/chat/completions';
-    
-    // Definir requestData con los datos necesarios para la API
-    private requestData: object = {
-        model: "jamba-instruct",
-        messages: [
-            {
-                role: "user",
-                content: "Genera un test de ejemplo para una API de login"
-            }
-        ],
-        max_tokens: 100
-    };
+// Inicializa la clase AITestGenerator
+const aiTestGenerator = new AITestGenerator();
 
-    // Aquí va tu método para generar el test
-    async generateTest(prompt: string): Promise<string> {
-        const requestData = {
-            model: "jamba-instruct",  // Cambiar al modelo correcto
-            messages: [
-                {
-                    role: "user",
-                    content: prompt  // Usamos el prompt pasado como argumento
-                }
-            ],
-            max_tokens: 100
-        };
-
-        try {
-          console.log("API Key:", process.env.AI21_API_KEY);  
-          const response = await axios.post(this.apiUrl, requestData, {
-                headers: {
-                    'Authorization': `Bearer ${process.env.AI21_API_KEY}`,  // Asegúrate de que el API Key esté en tu entorno
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.data && response.data.choices) {
-                console.log("Generated Test:", response.data.choices[0].message.content);
-                return response.data.choices[0].message.content;
-            } else {
-                throw new Error("No valid test generated.");
-            }
-        } catch (error) {
-            console.error("Error generating test:", error);
-            throw new Error("Failed to generate test");
-        }
-    }
+// Leer el archivo prompt.txt
+function readPromptFile(filePath: string): string {
+  try {
+    const prompt = fs.readFileSync(filePath, 'utf8'); // Lee el archivo .txt
+    return prompt;
+  } catch (error) {
+    console.error('Error reading prompt file:', error);
+    throw new Error('Failed to read prompt file.');
+  }
 }
+
+// Definir la ubicación del archivo .txt
+const promptFilePath = path.join(__dirname, '..', 'prompt.txt');
+
+// Leer el contenido del archivo prompt.txt
+const prompt = readPromptFile(promptFilePath);
+
+// Función para guardar el archivo generado
+function saveGeneratedTest(testContent: string, testName: string, folderPath: string) {
+  const filePath = path.join(folderPath, `${testName}.ts`);
+
+  try {
+    fs.writeFileSync(filePath, testContent, 'utf8');
+    console.log(`Test saved successfully at: ${filePath}`);
+  } catch (err) {
+    console.error('Error saving test file:', err);
+  }
+}
+
+// Ejecutar el generador de pruebas y guardar el archivo
+async function runTestGeneration() {
+  try {
+    // Genera el test usando el prompt leído desde el archivo .txt
+    const generatedTest = await aiTestGenerator.generateTest(prompt);
+
+    // Define el nombre del test y la carpeta donde se guardará
+    const testName = 'generatedLoginTest';
+    const folderPath = path.join(__dirname, '..', 'tests', 'ui');
+
+    // Asegúrate de que la carpeta exista
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+
+    // Guarda el test en un archivo
+    saveGeneratedTest(generatedTest, testName, folderPath);
+  } catch (error) {
+    console.error('Error generating or saving the test:', error);
+  }
+}
+
+// Ejecutar la función para generar y guardar el test
+runTestGeneration();

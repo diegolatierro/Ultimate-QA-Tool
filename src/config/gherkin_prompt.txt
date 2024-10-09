@@ -1,0 +1,9 @@
+Generate a Gherkin test for the login functionality on conduit.com.
+The user should use the email: "testAPI@test.com" and the password: "welcome123".
+The test should include the following steps:
+- Navigate to the login page.
+- Enter the email and password.
+- Click on the login button.
+- Validate that the user is logged in and redirected to the dashboard.
+- Also include a check to ensure an error message is shown if login fails.
+Please ensure the test is written in Gherkin format.

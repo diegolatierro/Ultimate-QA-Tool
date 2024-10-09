@@ -1,0 +1,3 @@
+{
+    "prompt": "Generate a Gherkin test for the login functionality on conduit.com.\nThe user should use the email: \"testAPI@test.com\" and the password: \"welcome123\".\nThe test should include the following steps:\n- Navigate to the login page.\n- Enter the email and password.\n- Click on the login button.\n- Validate that the user is logged in and redirected to the dashboard.\n- Also include a check to ensure an error message is shown if login fails.\nPlease ensure the test is written in Gherkin format."
+}

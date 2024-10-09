@@ -1,39 +1,35 @@
-import fs from 'fs';
-import path from 'path';
-import { AITestGenerator } from '../services/aiTestGenerator';
-// Inicializa la clase AITestGenerator
-const aiTestGenerator = new AITestGenerator();
-// Crear el prompt para generar el test
-const prompt = `
-  Generate a UI test for the login functionality on conduit.com.
-  The user should use the email: "test@example.com" and the password: "password123".
-  The test should be written in Gherkin format and include automated code in TypeScript using Playwright.
-`;
-// Función para guardar el archivo generado
-function saveGeneratedTest(testContent, testName, folderPath) {
-    const filePath = path.join(folderPath, `${testName}.ts`);
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const aiTestGenerator_1 = require("../services/aiTestGenerator");
+// Ruta al archivo JSON que contiene el prompt
+const promptFilePath = path_1.default.join(__dirname, '../config/testPrompt.json');
+// Leer el archivo JSON y extraer el prompt
+function readPromptFromFile(filePath) {
     try {
-        fs.writeFileSync(filePath, testContent, 'utf8');
-        console.log(`Test saved successfully at: ${filePath}`);
+        const fileContent = fs_1.default.readFileSync(filePath, 'utf8');
+        const jsonContent = JSON.parse(fileContent);
+        return jsonContent.prompt;
     }
-    catch (err) {
-        console.error('Error saving test file:', err);
+    catch (error) {
+        console.error('Error reading the prompt file:', error);
+        throw new Error('Failed to read the prompt from file.');
     }
 }
+// Inicializa la clase AITestGenerator
+const aiTestGenerator = new aiTestGenerator_1.AITestGenerator();
 // Ejecutar el generador de pruebas y guardar el archivo
 async function runTestGeneration() {
     try {
-        // Genera el test usando OpenAI
+        // Lee el prompt desde el archivo JSON
+        const prompt = readPromptFromFile(promptFilePath);
+        // Genera el test usando la clase AITestGenerator
         const generatedTest = await aiTestGenerator.generateTest(prompt);
-        // Define el nombre del test y la carpeta donde se guardará
-        const testName = 'generatedLoginTest';
-        const folderPath = path.join(__dirname, '..', 'tests', 'ui');
-        // Asegúrate de que la carpeta exista
-        if (!fs.existsSync(folderPath)) {
-            fs.mkdirSync(folderPath, { recursive: true });
-        }
-        // Guarda el test en un archivo
-        saveGeneratedTest(generatedTest, testName, folderPath);
+        console.log('Test generated and saved successfully');
     }
     catch (error) {
         console.error('Error generating or saving the test:', error);
