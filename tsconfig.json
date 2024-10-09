@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",          // Esto es importante para usar ESModules
+      "moduleResolution": "node",  // Usa la resolución de módulos de Node.js
+      "esModuleInterop": true,     // Habilita la interoperabilidad con ESModules
+      "skipLibCheck": true,
+      "outDir": "./dist",          // Puedes usar un directorio 'dist' para la salida compilada
+      "rootDir": "./src",          // Asegúrate de que tu código fuente está en la carpeta 'src'
+      "resolveJsonModule": true,
+      "baseUrl": ".",              // Asegura que la raíz sea el proyecto
+      "paths": {
+        "*": ["node_modules/*", "src/*"] // Configura las rutas de módulos
+      }
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules"]
+  }
+  
