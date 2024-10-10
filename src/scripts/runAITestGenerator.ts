@@ -55,45 +55,28 @@ function generateFileName(baseName: string, isTest: boolean = false): string {
   return `${baseName}_${timestamp}${isTest ? '.spec' : ''}`;
 }
 
-// Ejecutar la generación de archivos Gherkin
-async function runGherkinTestGeneration() {
+// Función para generar tanto el Gherkin como el test automatizado
+async function runTestGeneration(generateGherkin: boolean, generateAutomatedTest: boolean) {
   try {
     for (const prompt of prompts) {
-      // Genera solo el archivo Gherkin usando cada prompt
-      const { gherkin } = await aiTestGenerator.generateTest(prompt);
+      const { gherkin, automatedTest } = await aiTestGenerator.generateTest(prompt);
 
-      // Define los nombres de los archivos de forma dinámica
-      const gherkinFileName = generateFileName('gherkinTest');
+      // Si se quiere generar el archivo Gherkin
+      if (generateGherkin) {
+        const gherkinFileName = generateFileName('gherkinTest');
+        const gherkinFolderPath = path.join(__dirname, '..', 'tests', 'ui', 'features');
+        saveGeneratedFile(gherkin, gherkinFileName, gherkinFolderPath, 'feature');
+      }
 
-      // Define la ruta de la carpeta para los archivos Gherkin
-      const gherkinFolderPath = path.join(__dirname, '..', 'tests', 'ui', 'features');
-
-      // Guarda el archivo Gherkin en formato .feature
-      saveGeneratedFile(gherkin, gherkinFileName, gherkinFolderPath, 'feature');
+      // Si se quiere generar el archivo de test automatizado
+      if (generateAutomatedTest) {
+        const testFileName = generateFileName('automatedTest', true);
+        const automatedTestFolderPath = path.join(__dirname, '..', 'tests', 'ui', 'automatedScripts');
+        saveGeneratedFile(automatedTest, testFileName, automatedTestFolderPath, 'ts');
+      }
     }
   } catch (error) {
-    console.error('Error generating Gherkin test:', error);
-  }
-}
-
-// Ejecutar la generación de archivos de test automatizado
-async function runAutomatedTestGeneration() {
-  try {
-    for (const prompt of prompts) {
-      // Genera el archivo de test automatizado usando cada prompt
-      const { automatedTest } = await aiTestGenerator.generateTest(prompt);
-
-      // Define los nombres de los archivos de forma dinámica
-      const testFileName = generateFileName('automatedTest', true); // Añadir .spec.ts para el test automatizado
-
-      // Define la ruta de la carpeta para los archivos automatizados
-      const automatedTestFolderPath = path.join(__dirname, '..', 'tests', 'ui', 'automatedScripts');
-
-      // Guarda el archivo de código automatizado en formato .spec.ts
-      saveGeneratedFile(automatedTest, testFileName, automatedTestFolderPath, 'ts');
-    }
-  } catch (error) {
-    console.error('Error generating automated test:', error);
+    console.error('Error generating tests:', error);
   }
 }
 
@@ -103,13 +86,16 @@ const args = process.argv.slice(2);
 if (args.length > 0) {
   const action = args[0];
 
-  if (action === 'runGherkinTestGeneration') {
-    runGherkinTestGeneration();
-  } else if (action === 'runAutomatedTestGeneration') {
-    runAutomatedTestGeneration();
+  // Determina si generar Gherkin o automatización (o ambos)
+  const generateGherkin = args.includes('gherkin');
+  const generateAutomatedTest = args.includes('automatedTest');
+
+  // Ejecutar la función solo si alguna opción es verdadera
+  if (generateGherkin || generateAutomatedTest) {
+    runTestGeneration(generateGherkin, generateAutomatedTest);
   } else {
-    console.log('Unknown action. Use "runGherkinTestGeneration" or "runAutomatedTestGeneration".');
+    console.log('Please provide an action: "gherkin", "automatedTest", or both.');
   }
 } else {
-  console.log('Please provide an action: "runGherkinTestGeneration" or "runAutomatedTestGeneration".');
+  console.log('Please provide an action: "gherkin", "automatedTest", or both.');
 }

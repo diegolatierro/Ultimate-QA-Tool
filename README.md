@@ -70,7 +70,7 @@ Asegúrate de que tu proyecto tenga la siguiente estructura:
 Para generar únicamente los casos de prueba en formato Gherkin, ejecuta:
 
 ```bash
-npx ts-node src/scripts/runAITestGenerator.ts runGherkinTestGeneration
+npx ts-node src/scripts/runAITestGenerator.ts gherkin
 ```
 
 ### 2. Generación del código de automatización
@@ -78,7 +78,7 @@ npx ts-node src/scripts/runAITestGenerator.ts runGherkinTestGeneration
 Para generar únicamente el código de automatización en Playwright con TypeScript:
 
 ```bash
-npx ts-node src/scripts/runAITestGenerator.ts runAutomationTestGeneration
+npx ts-node src/scripts/runAITestGenerator.ts automatedTest
 ```
 
 ### Ejecución de las pruebas

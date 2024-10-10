@@ -24,7 +24,7 @@ export class AITestGenerator {
       messages: [
         {
           role: "user",
-          content: `Generate test scenarios in Gherkin syntax for the following functionality: "${prompt}".`
+          content: `Generate a complete and valid Gherkin test scenario in the Given-When-Then format for the following functionality: "${prompt}". Ensure all necessary steps, preconditions, and outcomes are covered clearly.`
         }
       ],
       max_tokens: 2048
@@ -40,13 +40,11 @@ export class AITestGenerator {
 
       if (response.data && response.data.choices && response.data.choices.length > 0) {
         const gherkinTest = response.data.choices[0].message.content.trim();
-
         if (!gherkinTest || gherkinTest.length === 0) {
           throw new Error("API returned an empty Gherkin test. Check the prompt and API response.");
         }
 
         console.log("Generated Gherkin Test:", gherkinTest);
-
         return gherkinTest;
       } else {
         console.error("Invalid API response structure:", response.data);
@@ -65,13 +63,9 @@ export class AITestGenerator {
       messages: [
         {
           role: "user",
-          content: `
-            Based on the following Gherkin test:
+          content: `Generate a full Playwright and TypeScript test script based on the following Gherkin scenario:
             "${gherkinTest}"
-            Generate **only the automated test code** using Playwright and TypeScript. 
-            The test should include web elements, interactions, and validations.
-            Ensure the test is complete and does not include any extra text, comments, or explanations.
-          `
+            Include all necessary selectors, page interactions, and validation logic. Ensure it runs autonomously without relying on external classes or files.`
         }
       ],
       max_tokens: 3000
@@ -93,7 +87,6 @@ export class AITestGenerator {
         }
 
         console.log("Generated Automated Test:", automatedTest);
-
         return automatedTest;
       } else {
         console.error("Invalid API response structure:", response.data);
