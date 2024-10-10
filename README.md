@@ -1,83 +1,74 @@
 
-# Instrucciones para Ejecutar los Scripts de Generación Automática de Pruebas
+# Instrucciones para la Generación Automática de Tests
 
-### 1. Instalar Dependencias
+## Requisitos previos
 
-Primero, necesitas instalar todas las dependencias necesarias para que el script funcione. Para ello, asegúrate de tener un proyecto Node.js en funcionamiento. Si aún no tienes un `package.json`, ejecuta el siguiente comando para inicializar uno:
+1. Asegúrate de tener instalado **Node.js** y **npm** (Node Package Manager) en tu sistema. Puedes verificar si están instalados ejecutando los siguientes comandos en tu terminal:
+
+```bash
+node -v
+npm -v
+```
+
+Si no están instalados, descárgalos desde [https://nodejs.org](https://nodejs.org) y sigue las instrucciones para tu sistema operativo.
+
+2. Instalar las dependencias necesarias. Navega hasta el directorio raíz de tu proyecto y ejecuta:
 
 ```bash
 npm init -y
+npm install playwright @types/node ts-node typescript
 ```
 
-#### Instalar las dependencias necesarias:
+Esto instalará **Playwright**, **TypeScript**, **ts-node**, y las definiciones de tipo necesarias.
 
-- **`ts-node`**: Para ejecutar el código TypeScript directamente.
-- **`typescript`**: El compilador de TypeScript.
-- **`@types/node`**: Los tipos para trabajar con Node.js y archivos.
-- **`fs`** y **`path`**: Son módulos core de Node.js, no necesitas instalarlos por separado.
+## Estructura del proyecto
 
-Ejecuta el siguiente comando para instalar las dependencias necesarias:
-
-```bash
-npm install ts-node typescript @types/node
-```
-
-#### Estructura de directorios
-Asegúrate de que tu estructura de carpetas sea algo similar a esto:
+El proyecto tiene la siguiente estructura de carpetas:
 
 ```
-/project-root
-  ├── /config
-  │   └── /prompts
-  ├── /src
-  │   └── /scripts
-  │       └── runAITestGenerator.ts
-  ├── /tests
-  │   └── /ui
-  │       ├── /features
-  │       └── /automatedScripts
-  └── package.json
+/config
+    /prompts         --> Contiene los archivos .txt con los prompts
+/scripts
+    runAITestGenerator.ts  --> Script para generar casos de prueba en formato Gherkin y código automatizado
+/tests
+    /ui
+        /features         --> Se almacenan los archivos .feature generados (Gherkin)
+        /automatedScripts --> Se almacenan los archivos .spec.ts generados (código automatizado)
+/services
+    aiTestGenerator.ts     --> Servicio para generar las pruebas usando IA
 ```
 
-### 2. Configuración de TypeScript
+## Ejecución de los scripts
 
-Crea un archivo `tsconfig.json` en la raíz del proyecto, si no lo tienes ya, con el siguiente contenido básico:
+### 1. Generar los casos de prueba en Gherkin
 
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "resolveJsonModule": true
-  },
-  "include": ["src/**/*.ts"]
-}
-```
-
-### 3. Instrucciones para ejecutar los scripts
-
-Puedes ejecutar cualquiera de las dos funciones por separado usando `npx ts-node` como se indica a continuación.
-
-#### Para generar los archivos Gherkin:
+Para generar los casos de prueba en formato **Gherkin** basado en los archivos `.txt` de la carpeta **prompts**, ejecuta el siguiente comando:
 
 ```bash
 npx ts-node src/scripts/runAITestGenerator.ts runGherkinTestGeneration
 ```
 
-#### Para generar los archivos de test automatizado:
+### 2. Generar el código automatizado
+
+Para generar los archivos de código automatizado **.spec.ts** desde los mismos prompts, ejecuta el siguiente comando:
 
 ```bash
 npx ts-node src/scripts/runAITestGenerator.ts runAutomatedTestGeneration
 ```
 
-### 4. Confirmar que los resultados se guardan
+### 3. Ejecutar los tests
 
-Una vez ejecutados los scripts, los archivos generados se guardarán en las carpetas correspondientes dentro de la estructura de directorios, es decir:
+Si deseas ejecutar los tests generados con **Playwright**, utiliza el siguiente comando:
 
-- Gherkin: `tests/ui/features/`
-- Tests automatizados: `tests/ui/automatedScripts/`
+```bash
+npx playwright test
+```
+
+Asegúrate de que los archivos generados de código automatizado estén en la carpeta **/tests/ui/automatedScripts** y que tengan la extensión `.spec.ts`.
+
+## Consideraciones adicionales
+
+- Los prompts en formato `.txt` deben estar en la carpeta **/config/prompts**.
+- El archivo **runAITestGenerator.ts** es responsable de leer los prompts y generar tanto los archivos Gherkin como el código automatizado.
+- Los archivos **.feature** se guardarán en **/tests/ui/features** y los archivos **.spec.ts** en **/tests/ui/automatedScripts**.
+
