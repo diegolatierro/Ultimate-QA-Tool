@@ -1,0 +1,20 @@
+Generate Gherkin scenarios for both login and article management functionality on the Conduit web application. The scenarios should include:
+
+1. Successful login with valid credentials.
+   - Email: testAPI@test.com
+   - Password: welcome123
+
+2. Unsuccessful login with invalid credentials.
+   - Email: testAPI@test.com
+   - Password: wrongpassword
+
+3. Creating a new article with valid details.
+   - Title: "First Article"
+   - Description: "A description for the first article."
+   - Body: "The body content of the first article."
+
+4. Deleting an existing article.
+   - Article ID: "54321"
+
+5. Attempting to delete an article that doesn't exist.
+   - Article ID: "67890"

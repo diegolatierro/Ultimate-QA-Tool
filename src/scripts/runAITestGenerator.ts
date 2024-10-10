@@ -5,26 +5,35 @@ import { AITestGenerator } from '../services/aiTestGenerator';
 // Inicializa la clase AITestGenerator
 const aiTestGenerator = new AITestGenerator();
 
-// Leer el archivo prompt.txt
-function readPromptFile(filePath: string): string {
+// Función para leer archivos de prompt en formato .txt desde una carpeta
+function readPromptFiles(folderPath: string): string[] {
+  const prompts: string[] = [];
+
   try {
-    const prompt = fs.readFileSync(filePath, 'utf8'); // Lee el archivo .txt
-    return prompt;
+    const files = fs.readdirSync(folderPath);
+
+    files.forEach(file => {
+      const filePath = path.join(folderPath, file);
+      const prompt = fs.readFileSync(filePath, 'utf8');
+      prompts.push(prompt);
+    });
+
+    return prompts;
   } catch (error) {
-    console.error('Error reading prompt file:', error);
-    throw new Error('Failed to read prompt file.');
+    console.error('Error reading prompt files:', error);
+    throw new Error('Failed to read prompt files.');
   }
 }
 
-// Definir la ubicación correcta del archivo .txt
-const promptFilePath = path.join(__dirname, '..', 'config', 'gherkin_prompt.txt');
+// Definir la ubicación de la carpeta de archivos de prompt
+const promptsFolderPath = path.join(__dirname, '..', 'config', 'prompts');
 
-// Leer el contenido del archivo prompt.txt
-const prompt = readPromptFile(promptFilePath);
+// Leer los archivos de prompt
+const prompts = readPromptFiles(promptsFolderPath);
 
 // Función para guardar los archivos generados (Gherkin y código automatizado)
-function saveGeneratedFile(fileContent: string, fileName: string, folderPath: string) {
-  const filePath = path.join(folderPath, `${fileName}.ts`);
+function saveGeneratedFile(fileContent: string, fileName: string, folderPath: string, fileExtension: string) {
+  const filePath = path.join(folderPath, `${fileName}.${fileExtension}`);
 
   try {
     // Asegurarse de que el directorio exista
@@ -34,38 +43,43 @@ function saveGeneratedFile(fileContent: string, fileName: string, folderPath: st
 
     // Guardar el archivo
     fs.writeFileSync(filePath, fileContent, 'utf8');
-    console.log(`${fileName} saved successfully at: ${filePath}`);
+    console.log(`${fileName}.${fileExtension} saved successfully at: ${filePath}`);
   } catch (err) {
     console.error('Error saving file:', err);
   }
 }
 
-// Ejecutar el generador de pruebas y guardar los archivos
+// Función para generar nombres de archivo basados en el tipo y la fecha
+function generateFileName(baseName: string, isTest: boolean = false): string {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '');
+  return `${baseName}_${timestamp}${isTest ? '.spec' : ''}`;
+}
+
+// Ejecutar el generador de pruebas para cada prompt
 async function runTestGeneration() {
   try {
-    // Genera el test usando el prompt leído desde el archivo .txt
-    const { gherkin, automatedTest } = await aiTestGenerator.generateTest(prompt);
+    for (const prompt of prompts) {
+      // Genera el test usando cada prompt
+      const { gherkin, automatedTest } = await aiTestGenerator.generateTest(prompt);
 
-    // Define el nombre de los archivos y la carpeta donde se guardarán
-    const gherkinFileName = 'generatedTestFeature';  // Nombre del archivo Gherkin
-    const testFileName = 'generatedAutomatedTest';    // Nombre del archivo automatizado
-    const folderPath = path.join(__dirname, '..', 'tests', 'ui', 'features');
+      // Define los nombres de los archivos de forma dinámica
+      const gherkinFileName = generateFileName('gherkinTest');
+      const testFileName = generateFileName('automatedTest', true); // Añadir .spec.ts para el test automatizado
 
-    // Asegúrate de que la carpeta exista
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
+      // Define las rutas de las carpetas
+      const gherkinFolderPath = path.join(__dirname, '..', 'tests', 'ui', 'features');
+      const automatedTestFolderPath = path.join(__dirname, '..', 'tests', 'ui', 'automatedScripts');
+
+      // Guarda el archivo Gherkin en formato .feature
+      saveGeneratedFile(gherkin, gherkinFileName, gherkinFolderPath, 'feature');
+
+      // Guarda el archivo de código automatizado en formato .spec.ts
+      saveGeneratedFile(automatedTest, testFileName, automatedTestFolderPath, 'ts');
     }
-
-    // Guarda el archivo Gherkin
-    saveGeneratedFile(gherkin, gherkinFileName, folderPath);
-
-    // Guarda el archivo de código automatizado
-    const automatedTestFolderPath = path.join(__dirname, '..', 'tests', 'ui','automatedScripts');
-    saveGeneratedFile(automatedTest, testFileName, automatedTestFolderPath);
   } catch (error) {
-    console.error('Error generating or saving the test:', error);
+    console.error('Error generating or saving the tests:', error);
   }
 }
 
-// Ejecutar la función para generar y guardar el test
+// Ejecutar la función para generar y guardar los tests
 runTestGeneration();

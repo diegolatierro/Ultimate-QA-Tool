@@ -1,0 +1,16 @@
+Generate Gherkin scenarios for article management functionality on the Conduit web application. Include scenarios for:
+
+1. Creating a new article with valid details.
+   - Title: "New Article"
+   - Description: "This is a new article."
+   - Body: "Here is the content of the article."
+
+2. Creating a new article with missing title.
+   - Description: "This article has no title."
+   - Body: "Here is the content of the article."
+
+3. Deleting an existing article.
+   - Article ID: "12345"
+
+4. Trying to delete an article that does not exist.
+   - Article ID: "99999"

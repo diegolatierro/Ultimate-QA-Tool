@@ -1,0 +1,17 @@
+Generate Gherkin scenarios for a login functionality on the Conduit web application. Include scenarios for:
+
+1. Successful login with valid credentials.
+   - Email: testAPI@test.com
+   - Password: welcome123
+
+2. Unsuccessful login with invalid email.
+   - Email: invalid@test.com
+   - Password: welcome123
+
+3. Unsuccessful login with invalid password.
+   - Email: testAPI@test.com
+   - Password: wrongpassword
+
+4. Unsuccessful login with empty fields.
+   - No email
+   - No password
