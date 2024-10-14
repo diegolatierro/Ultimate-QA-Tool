@@ -1,100 +1,86 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
 
 // Cargar el archivo .env
 dotenv.config();
 
 export class AITestGenerator {
-  private apiUrl: string = 'https://api.ai21.com/studio/v1/chat/completions';
+  private apiProvider: string = process.env.AI_PROVIDER || 'AI21';
+  private apiUrl: string;
+  private apiKey: string;
 
-  // Método para generar tanto el Gherkin como el código automatizado
-  async generateTest(prompt: string): Promise<{ gherkin: string, automatedTest: string }> {
-    const gherkin = await this.generateGherkin(prompt);
-    const automatedTest = await this.generateAutomatedTest(gherkin);
-
-    return { gherkin, automatedTest };
+  constructor() {
+    this.setApiConfig();
   }
 
-  // Método para generar el test Gherkin a partir del prompt
-  private async generateGherkin(prompt: string): Promise<string> {
-    const requestData = {
-      model: "jamba-instruct",
-      messages: [
-        {
-          role: "user",
-          content: `Generate a complete and valid Gherkin test scenario in the Given-When-Then format for the following functionality: "${prompt}". Ensure all necessary steps, preconditions, and outcomes are covered clearly.`
-        }
-      ],
-      max_tokens: 2048
-    };
+  // Establece la configuración según el proveedor
+  private setApiConfig() {
+    switch (this.apiProvider) {
+      case 'AI21':
+        this.apiUrl = process.env.AI21_API_URL!;
+        this.apiKey = process.env.AI21_API_KEY!;
+        break;
 
-    try {
-      const response = await axios.post(this.apiUrl, requestData, {
-        headers: {
-          'Authorization': `Bearer ${process.env.AI21_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      case 'COPILOT':
+        this.apiUrl = process.env.COPILOT_API_URL!;
+        this.apiKey = process.env.COPILOT_API_KEY!;
+        break;
 
-      if (response.data && response.data.choices && response.data.choices.length > 0) {
-        const gherkinTest = response.data.choices[0].message.content.trim();
-        if (!gherkinTest || gherkinTest.length === 0) {
-          throw new Error("API returned an empty Gherkin test. Check the prompt and API response.");
-        }
+      case 'OPENAI':
+        this.apiUrl = process.env.OPENAI_API_URL!;
+        this.apiKey = process.env.OPENAI_API_KEY!;
+        break;
 
-        console.log("Generated Gherkin Test:", gherkinTest);
-        return gherkinTest;
-      } else {
-        console.error("Invalid API response structure:", response.data);
-        throw new Error("No valid Gherkin test generated. API response structure is invalid.");
-      }
-    } catch (error) {
-      console.error("Error generating Gherkin test:", error);
-      throw new Error("Failed to generate Gherkin test. " + error.message);
+      default:
+        throw new Error(`Unsupported AI provider: ${this.apiProvider}`);
     }
   }
 
-  // Método para generar el código automatizado a partir del Gherkin
+  // Método para generar tanto el Gherkin como el código automatizado
+  async generateTest(prompt: string): Promise<{ gherkin: string; automatedTest: string }> {
+    const gherkin = await this.generateGherkin(prompt);
+    const automatedTest = await this.generateAutomatedTest(gherkin);
+    return { gherkin, automatedTest };
+  }
+
+  // Método para generar el Gherkin
+  private async generateGherkin(prompt: string): Promise<string> {
+    return this.sendApiRequest(
+      `Generate a complete and valid Gherkin test scenario in the Given-When-Then format for: "${prompt}".`
+    );
+  }
+
+  // Método para generar el test automatizado
   private async generateAutomatedTest(gherkinTest: string): Promise<string> {
+    return this.sendApiRequest(
+      `Generate a full Playwright and TypeScript test script for this Gherkin scenario: "${gherkinTest}".`
+    );
+  }
+
+  // Método genérico para enviar la solicitud a la API adecuada
+  private async sendApiRequest(content: string): Promise<string> {
     const requestData = {
-      model: "jamba-instruct",
-      messages: [
-        {
-          role: "user",
-          content: `Generate a full Playwright and TypeScript test script based on the following Gherkin scenario:
-            "${gherkinTest}"
-            Include all necessary selectors, page interactions, and validation logic. Ensure it runs autonomously without relying on external classes or files.`
-        }
-      ],
-      max_tokens: 3000
+      model: "jamba-instruct", // Ajusta según el proveedor
+      messages: [{ role: "user", content }],
+      max_tokens: 2048,
     };
 
     try {
       const response = await axios.post(this.apiUrl, requestData, {
         headers: {
-          'Authorization': `Bearer ${process.env.AI21_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
       });
 
-      if (response.data && response.data.choices && response.data.choices.length > 0) {
-        const automatedTest = response.data.choices[0].message.content.trim();
-
-        if (!automatedTest || automatedTest.length === 0) {
-          throw new Error("API returned an empty automated test. Check the prompt and API response.");
-        }
-
-        console.log("Generated Automated Test:", automatedTest);
-        return automatedTest;
+      if (response.data?.choices?.length > 0) {
+        return response.data.choices[0].message.content.trim();
       } else {
-        console.error("Invalid API response structure:", response.data);
-        throw new Error("No valid automated test generated. API response structure is invalid.");
+        throw new Error("API response is invalid or empty.");
       }
     } catch (error) {
-      console.error("Error generating automated test:", error);
-      throw new Error("Failed to generate automated test. " + error.message);
+      console.error("Error with API request:", error);
+      throw new Error("Failed to generate test content.");
     }
   }
 }

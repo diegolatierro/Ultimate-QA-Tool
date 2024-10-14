@@ -1,0 +1,12 @@
+{
+    "provider": "AI21",  
+    "openAI": {
+      "apiKey": "your-openai-api-key",
+      "model": "gpt-4"
+    },
+    "ai21": {
+      "apiKey": "9QSgCW7AGtIUoBxYFMshZ7iwJNMCVspU",
+      "model": "j2-ultra"
+    }
+  }
+  

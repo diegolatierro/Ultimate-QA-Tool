@@ -3,37 +3,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const aiTestGenerator_1 = require("../services/aiTestGenerator");
-// Ruta al archivo JSON que contiene el prompt
-const promptFilePath = path_1.default.join(__dirname, '../config/testPrompt.json');
-// Leer el archivo JSON y extraer el prompt
-function readPromptFromFile(filePath) {
-    try {
-        const fileContent = fs_1.default.readFileSync(filePath, 'utf8');
-        const jsonContent = JSON.parse(fileContent);
-        return jsonContent.prompt;
-    }
-    catch (error) {
-        console.error('Error reading the prompt file:', error);
-        throw new Error('Failed to read the prompt from file.');
-    }
-}
 // Inicializa la clase AITestGenerator
 const aiTestGenerator = new aiTestGenerator_1.AITestGenerator();
-// Ejecutar el generador de pruebas y guardar el archivo
-async function runTestGeneration() {
+console.log(`Using AI Provider: ${process.env.AI_PROVIDER}`);
+// Resto del código de lectura de archivos y generación de tests...
+async function runTestGeneration(generateGherkin, generateAutomatedTest) {
     try {
-        // Lee el prompt desde el archivo JSON
-        const prompt = readPromptFromFile(promptFilePath);
-        // Genera el test usando la clase AITestGenerator
-        const generatedTest = await aiTestGenerator.generateTest(prompt);
-        console.log('Test generated and saved successfully');
+        for (const prompt of prompts) {
+            const { gherkin, automatedTest } = await aiTestGenerator.generateTest(prompt);
+            // Guardar los archivos generados según corresponda
+            if (generateGherkin) {
+                const gherkinFileName = generateFileName('gherkinTest');
+                const gherkinFolderPath = path_1.default.join(__dirname, '..', 'tests', 'ui', 'features');
+                saveGeneratedFile(gherkin, gherkinFileName, gherkinFolderPath, 'feature');
+            }
+            if (generateAutomatedTest) {
+                const testFileName = generateFileName('automatedTest', true);
+                const automatedTestFolderPath = path_1.default.join(__dirname, '..', 'tests', 'ui', 'automatedScripts');
+                saveGeneratedFile(automatedTest, testFileName, automatedTestFolderPath, 'ts');
+            }
+        }
     }
     catch (error) {
-        console.error('Error generating or saving the test:', error);
+        console.error('Error generating tests:', error);
     }
 }
-// Ejecutar la función para generar y guardar el test
-runTestGeneration();
